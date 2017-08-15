@@ -8,6 +8,8 @@ buildscript {
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:3.4.0"
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+        // Rio Addon
+        classpath 'com.apple.cie.rio:gradle-build-plugin:+'
     }
 }
 
@@ -128,7 +130,7 @@ configurations
     integrationTestRuntime.extendsFrom testRuntime
 }
 
-dependencies 
+dependencies
 {
     compile packages.commons
     compile packages.atlas
@@ -154,15 +156,15 @@ tasks.withType(Test) {
 /**
  * Artifact related items
  */
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
+// task javadocJar(type: Jar) {
+//     classifier = 'javadoc'
+//     from javadoc
+// }
+//
+// task sourcesJar(type: Jar) {
+//     classifier = 'sources'
+//     from sourceSets.main.allSource
+// }
 
 task shaded(type: Jar) {
     baseName = project.name
@@ -188,10 +190,10 @@ shadowJar {
     zip64 = true
 }
 
-artifacts
-{
-    archives javadocJar, sourcesJar
-}
+// artifacts
+// {
+//     archives javadocJar, sourcesJar
+// }
 
 /**
  * Deployment related items
@@ -296,7 +298,7 @@ task runChecks(type: JavaExec, dependsOn: 'assemble', description: 'Executes the
     // add log4j config to the classpath
     classpath('./config/log4j')
 
-    // uncomment to change jvm args 
+    // uncomment to change jvm args
     // jvmArgs(["-Xmx8g","-Xms8g"])
 
     // uncomment to enable jvm debugging
@@ -334,4 +336,38 @@ task buildCheck(type: Copy) {
 task syncLibs(type: Sync) {
     into "libs"
     from configurations.runtime
+}
+
+
+// Rio addons
+
+apply plugin: 'rio-library'
+
+rio
+{
+    library
+    { isPublic = true }
+}
+
+publish.dependsOn shaded
+publish.dependsOn shadowJar
+
+artifacts {
+    archives shaded
+    archives shadowJar
+}
+
+publishing {
+    publications {
+        rioLibrary(MavenPublication) {
+            groupId project.group
+            artifactId project.name
+            artifact shaded {
+                classifier "shaded"
+            }
+            artifact shadowJar {
+                classifier "fat"
+            }
+        }
+    }
 }
