@@ -1,0 +1,26 @@
+# internal project uses simpler one-branch scheme: internal branch only. No dev to master etc, as that is handled in the public version.
+# dev and master come from the public version and should be touched only when the public changes are merged in
+
+builds:
+# prb is intended to compile and test pending pull requests on the branch
+  - branchName: apple
+    template: gradle:v3:lib:prb
+    jdk: 1.8
+
+  - branchName: apple
+    template: gradle:v3:app:snapshot
+    jdk: 1.8
+    deletionDate: 2050-07-15
+
+# build master everyday, 'H' means the time will be assigned by Jenkins 
+  - branchName: apple
+    template: gradle:v3:app:build
+    jdk: 1.8
+    timerTrigger: H H * * *
+    githubPushTrigger: false
+
+# build master to a release, when needed
+  - branchName: apple
+    template: gradle:v3:app:release
+    jdk: 1.8
+    githubPushTrigger: false
