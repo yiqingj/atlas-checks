@@ -1,26 +1,40 @@
-# internal project uses simpler one-branch scheme: internal branch only. No dev to master etc, as that is handled in the public version.
-# dev and master come from the public version and should be touched only when the public changes are merged in
+# ref: https://docs.pie.apple.com/rio/reference/schemav2.html#publish-libraries-2-0
+schemaVersion: '2.0'
 
 builds:
 # prb is intended to compile and test pending pull requests on the branch
-  - branchName: apple
+- branchName: apple
+  build:
     template: gradle:v3:lib:prb
-    jdk: 1.8
+  machine:
+    java:
+      version: 1.8
 
-  - branchName: apple
+- branchName: apple
+  build:
     template: gradle:v3:app:snapshot
-    jdk: 1.8
-    deletionDate: 2050-07-15
+  machine:
+    java:
+      version: 1.8
+  deletionDate: 2050-07-15T00:00:00Z
 
 # build master everyday, 'H' means the time will be assigned by Jenkins 
-  - branchName: apple
+- branchName: apple
+  build:
     template: gradle:v3:app:build
-    jdk: 1.8
-    timerTrigger: H H * * *
-    githubPushTrigger: false
+  machine:
+    java:
+      version: 1.8
+  trigger:
+    timer: H H * * *
+    gitPush: false
 
 # build master to a release, when needed
-  - branchName: apple
+- branchName: apple
+  build:
     template: gradle:v3:app:release
-    jdk: 1.8
-    githubPushTrigger: false
+  machine:
+    java:
+      version: 1.8
+  trigger:
+    gitPush: false
