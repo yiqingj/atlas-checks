@@ -38,3 +38,8 @@ builds:
       version: 1.8
   trigger:
     gitPush: false
+
+# needed to publish this to rio
+publish:
+  libraries:
+    repo: m2:oss-patched
