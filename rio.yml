@@ -10,14 +10,6 @@ builds:
     java:
       version: 1.8
 
-- branchName: apple
-  build:
-    template: gradle:v3:app:snapshot
-  machine:
-    java:
-      version: 1.8
-  deletionDate: 2050-07-15T00:00:00Z
-
 # build master everyday, 'H' means the time will be assigned by Jenkins 
 - branchName: apple
   build:
