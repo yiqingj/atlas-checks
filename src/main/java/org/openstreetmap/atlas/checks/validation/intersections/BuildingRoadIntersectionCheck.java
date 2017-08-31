@@ -7,16 +7,18 @@ import java.util.function.Predicate;
 
 import org.openstreetmap.atlas.checks.base.BaseCheck;
 import org.openstreetmap.atlas.checks.flag.CheckFlag;
+import org.openstreetmap.atlas.geography.Location;
 import org.openstreetmap.atlas.geography.atlas.items.Area;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasObject;
 import org.openstreetmap.atlas.geography.atlas.items.Edge;
+import org.openstreetmap.atlas.geography.atlas.items.Node;
 import org.openstreetmap.atlas.tags.BuildingTag;
 import org.openstreetmap.atlas.tags.CoveredTag;
 import org.openstreetmap.atlas.tags.HighwayTag;
+import org.openstreetmap.atlas.tags.TunnelTag;
 import org.openstreetmap.atlas.tags.annotations.validation.Validators;
+import org.openstreetmap.atlas.utilities.collections.Iterables;
 import org.openstreetmap.atlas.utilities.configuration.Configuration;
-
-import com.google.common.collect.Iterables;
 
 /**
  * Flags buildings that intersect/touch centerlines of roads. This doesn't address cases where
@@ -27,6 +29,12 @@ import com.google.common.collect.Iterables;
 public class BuildingRoadIntersectionCheck extends BaseCheck
 {
     private static final long serialVersionUID = 5986017212661374165L;
+
+    private static Predicate<Edge> doesntHaveProperTags()
+    {
+        return edge -> !(Validators.isOfType(edge, CoveredTag.class, CoveredTag.YES)
+                || Validators.isOfType(edge, TunnelTag.class, TunnelTag.BUILDING_PASSAGE));
+    }
 
     private static Predicate<Edge> intersectsCoreWay(final Area building)
     {
@@ -59,12 +67,13 @@ public class BuildingRoadIntersectionCheck extends BaseCheck
     protected Optional<CheckFlag> flag(final AtlasObject object)
     {
         final Area building = (Area) object;
-        final Iterable<Edge> intersectingEdges = Iterables.filter(
-                object.getAtlas().edgesIntersecting(object.bounds(), intersectsCoreWay(building)),
-                edge -> !Validators.isOfType(edge, CoveredTag.class, CoveredTag.YES));
-        final CheckFlag flag = new CheckFlag(getTaskIdentifier(object));
-        flag.addObject(object);
-        handleIntersections(intersectingEdges, flag, object);
+        final Iterable<Edge> intersectingEdges = Iterables.filter(building.getAtlas()
+                .edgesIntersecting(building.bounds(), intersectsCoreWay(building)),
+                doesntHaveProperTags());
+
+        final CheckFlag flag = new CheckFlag(getTaskIdentifier(building));
+        flag.addObject(building);
+        handleIntersections(intersectingEdges, flag, building);
 
         if (flag.getPolyLines().size() > 1)
         {
@@ -86,15 +95,19 @@ public class BuildingRoadIntersectionCheck extends BaseCheck
      *            the building being processed
      */
     private void handleIntersections(final Iterable<Edge> intersectingEdges, final CheckFlag flag,
-            final AtlasObject building)
+            final Area building)
     {
         final Set<Edge> knownIntersections = new HashSet<>();
         for (final Edge edge : intersectingEdges)
         {
             if (!knownIntersections.contains(edge))
             {
-                flag.addObject(edge, "Building (id " + building.getOsmIdentifier()
-                        + ") intersects road (id " + edge.getOsmIdentifier() + ")");
+                if (!isValidIntersection(building, edge))
+                {
+                    flag.addObject(edge, "Building (id " + building.getOsmIdentifier()
+                            + ") intersects road (id " + edge.getOsmIdentifier() + ")");
+                }
+
                 knownIntersections.add(edge);
                 if (edge.hasReverseEdge())
                 {
@@ -104,4 +117,39 @@ public class BuildingRoadIntersectionCheck extends BaseCheck
         }
     }
 
+    /**
+     * An edge intersecting with a building that doesn't have the proper tags is only valid iff it
+     * intersects at one single node and that node is shared with an edge that has the proper tags
+     *
+     * @param building
+     *            the building being processed
+     * @param edge
+     *            the edge being examined
+     * @return true if the intersection is valid, false otherwise
+     */
+    private boolean isValidIntersection(final Area building, final Edge edge)
+    {
+        final Node edgeStart = edge.start();
+        final Node edgeEnd = edge.end();
+        final Set<Location> intersections = building.asPolygon().intersections(edge.asPolyLine());
+        if (intersections.size() == 1)
+        {
+            if (intersections.contains(edgeStart.getLocation()))
+            {
+                if (edge.inEdges().stream().filter(doesntHaveProperTags()).count() > 0)
+                {
+                    return true;
+                }
+            }
+            if (intersections.contains(edgeEnd.getLocation()))
+            {
+                if (edgeStart.outEdges().stream().filter(doesntHaveProperTags()).count() > 0)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }
