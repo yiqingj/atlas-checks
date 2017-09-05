@@ -38,11 +38,20 @@ public class AbbreviatedNameCheck extends BaseCheck<String>
 
     // Splitter to parse name
     private static final Splitter NAME_SPLITTER = Splitter
-            .on(CharMatcher.JAVA_LETTER_OR_DIGIT.negate()).omitEmptyStrings();;
+            .on(CharMatcher.JAVA_LETTER_OR_DIGIT.negate()).omitEmptyStrings();
 
     private final Set<String> abbreviations;
     private final Locale locale;
 
+    /**
+     * Generates a unique identifier given an {@link AtlasEntity}. OSM/Atlas objects with different
+     * types can share the identifier (way 12345 - node 12345). This method makes sure we generate a
+     * truly unique identifier among different types for an {@link AtlasEntity}.
+     *
+     * @param entity
+     *            {@link AtlasEntity} to generate unique identifier for
+     * @return unique object identifier among different types
+     */
     private static String getUniqueObjectIdentifier(final AtlasEntity entity)
     {
         return String.format("%s%s", entity.getType().toShortString(), entity.getOsmIdentifier());
