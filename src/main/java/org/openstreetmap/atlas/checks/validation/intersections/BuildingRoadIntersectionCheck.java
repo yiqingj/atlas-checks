@@ -46,6 +46,7 @@ public class BuildingRoadIntersectionCheck extends BaseCheck
     /**
      * An edge intersecting with a building that doesn't have the proper tags is only valid iff it
      * intersects at one single node and that node is shared with an edge that has the proper tags
+     * and it is not enclosed in the building
      *
      * @param building
      *            the building being processed
@@ -58,7 +59,8 @@ public class BuildingRoadIntersectionCheck extends BaseCheck
         final Node edgeStart = edge.start();
         final Node edgeEnd = edge.end();
         final Set<Location> intersections = building.asPolygon().intersections(edge.asPolyLine());
-        if (intersections.size() == 1)
+        if (intersections.size() == 1
+                && !building.asPolygon().fullyGeometricallyEncloses(edge.asPolyLine()))
         {
             if (intersections.contains(edgeStart.getLocation())
                     && edge.inEdges().stream().anyMatch(ignoreTags().negate()))
