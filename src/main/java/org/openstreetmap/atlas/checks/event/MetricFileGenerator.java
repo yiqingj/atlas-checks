@@ -1,6 +1,9 @@
 package org.openstreetmap.atlas.checks.event;
 
+import java.util.Date;
+
 import org.openstreetmap.atlas.checks.persistence.SparkFileHelper;
+import org.openstreetmap.atlas.streaming.resource.FileSuffix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +70,12 @@ public final class MetricFileGenerator extends FileProcessor<MetricEvent>
     @Override
     protected String getFilename()
     {
+        if (filename.endsWith(FileSuffix.CSV.toString()))
+        {
+            String root = filename.substring(0,
+                    filename.lastIndexOf(String.valueOf(FileSuffix.CSV)));
+            return String.format("%s-%s%s", root, new Date().getTime(), FileSuffix.CSV);
+        }
         return this.filename;
     }
 }
