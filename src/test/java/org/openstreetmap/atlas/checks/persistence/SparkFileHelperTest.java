@@ -150,11 +150,11 @@ public class SparkFileHelperTest
         Assert.assertFalse(tempFile2.exists());
 
         // Rename test to test-another
-        TEST_HELPER.commit(new SparkFilePath(tempFile.getAbsolutePath(), tempFile2.getAbsolutePath()));
+        TEST_HELPER
+                .commit(new SparkFilePath(tempFile.getAbsolutePath(), tempFile2.getAbsolutePath()));
         Assert.assertFalse(tempFile.exists());
         Assert.assertTrue(tempFile2.exists());
     }
-
 
     @Test
     public void testCommitDirectory() throws IOException
@@ -166,19 +166,24 @@ public class SparkFileHelperTest
 
         targetFolder.delete();
 
-        final File tempFile = File.createTempFile("test", FileSuffix.TEMPORARY.toString(), tempFolder);
-        final File tempFile2 = File.createTempFile("test-another", FileSuffix.TEMPORARY.toString(), tempFolder);
+        final File tempFile = File.createTempFile("test", FileSuffix.TEMPORARY.toString(),
+                tempFolder);
+        final File tempFile2 = File.createTempFile("test-another", FileSuffix.TEMPORARY.toString(),
+                tempFolder);
 
-        TEST_HELPER.commit(new SparkFilePath(tempFolder.getAbsolutePath(), targetFolder.getAbsolutePath()));
+        TEST_HELPER.commit(
+                new SparkFilePath(tempFolder.getAbsolutePath(), targetFolder.getAbsolutePath()));
 
         Assert.assertFalse(tempFile.exists());
         Assert.assertFalse(tempFile2.exists());
 
-        final String[] targetFile = targetFolder.list((dir, name) -> name.equals(tempFile.getName()));
+        final String[] targetFile = targetFolder
+                .list((dir, name) -> name.equals(tempFile.getName()));
         Assert.assertNotNull(targetFile);
         Assert.assertEquals(1, targetFile.length);
 
-        final String[] targetFile2 = targetFolder.list((dir, name) -> name.equals(tempFile.getName()));
+        final String[] targetFile2 = targetFolder
+                .list((dir, name) -> name.equals(tempFile.getName()));
         Assert.assertNotNull(targetFile2);
         Assert.assertEquals(1, targetFile2.length);
     }

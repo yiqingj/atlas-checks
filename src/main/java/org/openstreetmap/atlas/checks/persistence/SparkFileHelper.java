@@ -291,7 +291,8 @@ public class SparkFileHelper implements Serializable
      * Renames the {@link SparkFilePath#temporaryPath} to the {@link SparkFilePath#targetPath},
      * taking care to avoid producing nested directories.
      *
-     * @param path {@link SparkFilePath} to commit
+     * @param path
+     *            {@link SparkFilePath} to commit
      */
     public void commit(final SparkFilePath path)
     {
