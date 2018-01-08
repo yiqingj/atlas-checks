@@ -164,5 +164,18 @@
         "rules":["highway=primary","highway=primary_link","highway=secondary","highway=secondary_link"]
       }
     }
+  },
+  "SignPostCheck": {
+    "enabled": false,
+    "linkLength": {
+      "minimum.meters": 50.0
+    },
+    "challenge": {
+      "description": "Tasks contain nodes where sign post tagging could be missing.  In particular it looks for motorway and trunk ways which have a link edge exiting them.  A task is generated if either the connecting node is missing the motorway_junction tag or the exiting segment is missing the destination tag.",
+      "blurb": "Missing sign post tags",
+      "instruction": "Either add the missing motorway_junction tag to the identified node and / or the destination tag to the exiting link segment.",
+      "difficulty": "NORMAL",
+      "defaultPriority": "MEDIUM"
+    }
   }
 }
