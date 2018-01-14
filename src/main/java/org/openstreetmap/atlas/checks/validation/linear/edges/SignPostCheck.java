@@ -1,6 +1,8 @@
-package org.openstreetmap.atlas.checks.validation;
+package org.openstreetmap.atlas.checks.validation.linear.edges;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -34,9 +36,13 @@ public class SignPostCheck extends BaseCheck<String>
 {
     private static final long serialVersionUID = 8042255121118115024L;
 
+    // Instruction
+    private static final String INSTRUCTION = "Junction node is missing the following tags: {0}.";
+    private static final List<String> FALLBACK_INSTRUCTIONS = Arrays.asList(INSTRUCTION);
+
     // Predicate defining the type of outbound links we are looking for.
-    private static final Predicate<Edge> LINK_PREDICATE = e -> e
-            .highwayTag() == HighwayTag.MOTORWAY_LINK || e.highwayTag() == HighwayTag.TRUNK_LINK;
+    private static final Predicate<Edge> LINK_PREDICATE = edge -> edge
+            .highwayTag() == HighwayTag.MOTORWAY_LINK || edge.highwayTag() == HighwayTag.TRUNK_LINK;
 
     // The default minimum link length which will trigger the check.
     public static final double DISTANCE_MINIMUM_METERS_DEFAULT = 50;
@@ -100,8 +106,8 @@ public class SignPostCheck extends BaseCheck<String>
                 if (!Validators.isOfType(outEdge.start(), HighwayTag.class,
                         HighwayTag.MOTORWAY_JUNCTION))
                 {
-                    missingTags
-                            .add(HighwayTag.KEY + "=" + HighwayTag.MOTORWAY_JUNCTION.getTagValue());
+                    missingTags.add(String.format("%s=%s", HighwayTag.KEY,
+                            HighwayTag.MOTORWAY_JUNCTION.getTagValue()));
                     offendingObjects.add(outEdge.start());
                 }
 
@@ -121,12 +127,17 @@ public class SignPostCheck extends BaseCheck<String>
         // highway=motorway_junction tag.
         if (!offendingObjects.isEmpty())
         {
-            // Construct the description string for the errors.
-            final String instruction = "Add the missing tag(s):  " + String.join(",", missingTags);
-
-            return Optional.of(createFlag(offendingObjects, instruction));
+            final String instruction = this.getLocalizedInstruction(0,
+                    String.join(", ", missingTags));
+            return Optional.of(this.createFlag(offendingObjects, instruction));
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    protected List<String> getFallbackInstructions()
+    {
+        return FALLBACK_INSTRUCTIONS;
     }
 }
