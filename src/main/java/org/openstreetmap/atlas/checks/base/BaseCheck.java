@@ -89,7 +89,7 @@ public abstract class BaseCheck<T> implements Check, Serializable
         if (challengeMap.isEmpty())
         {
             this.challenge = new Challenge(this.getClass().getSimpleName(), "", "", "",
-                    ChallengeDifficulty.EASY);
+                    ChallengeDifficulty.EASY, "");
         }
         else
         {
