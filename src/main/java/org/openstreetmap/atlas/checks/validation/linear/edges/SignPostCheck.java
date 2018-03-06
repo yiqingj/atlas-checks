@@ -1,7 +1,6 @@
 package org.openstreetmap.atlas.checks.validation.linear.edges;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,8 +40,12 @@ public class SignPostCheck extends BaseCheck<String>
     private static final long serialVersionUID = 8042255121118115024L;
 
     // Instruction
-    private static final String INSTRUCTION = "Junction node is missing the following tags: {0}.";
-    private static final List<String> FALLBACK_INSTRUCTIONS = Arrays.asList(INSTRUCTION);
+    private static final String NODE_INSTRUCTION = "Junction node {0,number,#} is missing the following tags: {1}.";
+    private static final String EDGE_INSTRUCTION = "Way {0,number,#} ({1}) is missing the following tags: {2}.";
+    private static final List<String> FALLBACK_INSTRUCTIONS = Arrays.asList(NODE_INSTRUCTION,
+            EDGE_INSTRUCTION);
+    private static final String OFF_RAMP_KEY = "off-ramp";
+    private static final String ON_RAMP_KEY = "on-ramp";
 
     // Default values for configurable settings
     private static final double DISTANCE_MINIMUM_METERS_DEFAULT = 50;
@@ -117,8 +120,7 @@ public class SignPostCheck extends BaseCheck<String>
     {
         final Edge edge = (Edge) object;
         final HighwayTag highwayTag = edge.highwayTag();
-        final Set<String> missingTags = new HashSet<String>();
-        final Set<AtlasObject> offendingObjects = new HashSet<AtlasObject>();
+        final CheckFlag flag = new CheckFlag(this.getTaskIdentifier(object));
 
         // First find off ramps
         edge.end().outEdges().stream()
@@ -129,16 +131,18 @@ public class SignPostCheck extends BaseCheck<String>
                     final Node start = outEdge.start();
                     if (!Validators.isOfType(start, HighwayTag.class, HighwayTag.MOTORWAY_JUNCTION))
                     {
-                        missingTags.add(String.format("%s=%s", HighwayTag.KEY,
-                                HighwayTag.MOTORWAY_JUNCTION.getTagValue()));
-                        offendingObjects.add(start);
+                        flag.addInstruction(this.getLocalizedInstruction(0,
+                                start.getOsmIdentifier(), String.format("%s=%s", HighwayTag.KEY,
+                                        HighwayTag.MOTORWAY_JUNCTION.getTagValue())));
+                        flag.addObject(start);
                     }
 
                     // Check if edge is missing destination tag
                     if (!outEdge.getTag(DestinationTag.KEY).isPresent())
                     {
-                        missingTags.add(DestinationTag.KEY);
-                        offendingObjects.add(outEdge);
+                        flag.addInstruction(this.getLocalizedInstruction(1,
+                                outEdge.getOsmIdentifier(), OFF_RAMP_KEY, DestinationTag.KEY));
+                        flag.addObject(outEdge);
                     }
                 });
 
@@ -154,26 +158,25 @@ public class SignPostCheck extends BaseCheck<String>
                     final Node start = rampEdge.start();
                     if (!Validators.isOfType(start, HighwayTag.class, HighwayTag.MOTORWAY_JUNCTION))
                     {
-                        missingTags.add(String.format("%s=%s", HighwayTag.KEY,
-                                HighwayTag.MOTORWAY_JUNCTION.getTagValue()));
-                        offendingObjects.add(start);
+                        flag.addInstruction(this.getLocalizedInstruction(0,
+                                start.getOsmIdentifier(), String.format("%s=%s", HighwayTag.KEY,
+                                        HighwayTag.MOTORWAY_JUNCTION.getTagValue())));
+                        flag.addObject(start);
                     }
 
                     // Check if edge is missing destination tag
                     if (!rampEdge.getTag(DestinationTag.KEY).isPresent())
                     {
-                        missingTags.add(DestinationTag.KEY);
-                        offendingObjects.add(rampEdge);
+                        flag.addInstruction(this.getLocalizedInstruction(1,
+                                rampEdge.getOsmIdentifier(), ON_RAMP_KEY, DestinationTag.KEY));
+                        flag.addObject(rampEdge);
                     }
                 });
 
-        // If it has an out link edge make sure that the end node has the appropriate
-        // highway=motorway_junction tag.
-        if (!offendingObjects.isEmpty())
+        // Return the flag if it has any flagged objects in it
+        if (!flag.getFlaggedObjects().isEmpty())
         {
-            final String instruction = this.getLocalizedInstruction(0,
-                    String.join(", ", missingTags));
-            return Optional.of(this.createFlag(offendingObjects, instruction));
+            return Optional.of(flag);
         }
 
         return Optional.empty();
