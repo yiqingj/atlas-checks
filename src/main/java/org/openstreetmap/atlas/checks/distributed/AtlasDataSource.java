@@ -174,8 +174,8 @@ public class AtlasDataSource implements Serializable
     private Atlas loadPbf(final Resource input, final String country)
     {
         // Setting the CountryBoundaryMap to the polygon boundary
-        final CountryBoundaryMap map = new CountryBoundaryMap(
-                Collections.singletonMap(country, polygon));
+        final CountryBoundaryMap map = CountryBoundaryMap
+                .fromBoundaryMap(Collections.singletonMap(country, polygon));
         final AtlasLoadingOption option = AtlasLoadingOption.createOptionWithAllEnabled(map);
         return new OsmPbfLoader(input, polygon, option).read();
     }
