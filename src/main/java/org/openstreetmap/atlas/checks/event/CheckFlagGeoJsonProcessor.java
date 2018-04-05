@@ -115,12 +115,14 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
     {
         try
         {
-            if (featureBuckets.isEmpty() && !this.hasWritten)
+            if (!featureBuckets.isEmpty())
             {
-                logger.warn("Writing empty file with no content in {}.", this.directory);
+                this.featureBuckets.forEach(this::write);
+            }
+            else
+            {
                 this.write(CommonConstants.EMPTY_STRING, new Vector<>());
             }
-            this.featureBuckets.forEach(this::write);
         }
         catch (final Exception e)
         {
@@ -183,13 +185,6 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
      */
     private void write(final String challenge, final Vector<JsonObject> featureBucket)
     {
-        if (featureBucket.size() == 0 && !this.hasWritten)
-        {
-            this.fileHelper.write(this.directory,
-                    String.format("%s%s", "empty",
-                            new GeoJsonPathFilter(this.compressOutput).getExtension()),
-                    CommonConstants.EMPTY_STRING);
-        }
         if (featureBucket.size() > 0)
         {
             final JsonObject featureCollection = new JsonObject();
@@ -202,6 +197,14 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
                     featureCollection.toString());
             this.hasWritten = true;
             featureBucket.clear();
+        }
+        else if (!this.hasWritten)
+        {
+            logger.warn("Writing empty file with no content in {}.", this.directory);
+            this.fileHelper.write(this.directory,
+                    String.format("%s%s", "empty",
+                            new GeoJsonPathFilter(this.compressOutput).getExtension()),
+                    CommonConstants.EMPTY_STRING);
         }
     }
 }
