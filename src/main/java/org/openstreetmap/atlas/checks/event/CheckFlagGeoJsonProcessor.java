@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.openstreetmap.atlas.checks.constants.CommonConstants;
 import org.openstreetmap.atlas.checks.distributed.GeoJsonPathFilter;
 import org.openstreetmap.atlas.generator.tools.spark.utilities.SparkFileHelper;
 import org.slf4j.Logger;
@@ -49,6 +50,9 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
     // Batch size override
     private int batchSizeOverride;
 
+    // Detect has written
+    private boolean hasWritten;
+
     /**
      * Default constructor
      *
@@ -61,6 +65,7 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
     {
         this.fileHelper = fileHelper;
         this.directory = outputFolder;
+        this.hasWritten = false;
     }
 
     @Override
@@ -110,6 +115,11 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
     {
         try
         {
+            if (featureBuckets.isEmpty() && !this.hasWritten)
+            {
+                logger.warn("Writing empty file with no content in {}.", this.directory);
+                this.write(CommonConstants.EMPTY_STRING, new Vector<>());
+            }
             this.featureBuckets.forEach(this::write);
         }
         catch (final Exception e)
@@ -173,6 +183,13 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
      */
     private void write(final String challenge, final Vector<JsonObject> featureBucket)
     {
+        if (featureBucket.size() == 0 && !this.hasWritten)
+        {
+            this.fileHelper.write(this.directory,
+                    String.format("%s%s", "empty",
+                            new GeoJsonPathFilter(this.compressOutput).getExtension()),
+                    CommonConstants.EMPTY_STRING);
+        }
         if (featureBucket.size() > 0)
         {
             final JsonObject featureCollection = new JsonObject();
@@ -183,6 +200,7 @@ public final class CheckFlagGeoJsonProcessor implements Processor<CheckFlagEvent
             this.fileHelper.write(this.directory,
                     this.getFilename(challenge, featureJsonArray.size()),
                     featureCollection.toString());
+            this.hasWritten = true;
             featureBucket.clear();
         }
     }
