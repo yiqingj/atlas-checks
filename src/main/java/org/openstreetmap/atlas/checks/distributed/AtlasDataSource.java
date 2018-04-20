@@ -175,7 +175,7 @@ public class AtlasDataSource implements Serializable
     {
         // Setting the CountryBoundaryMap to the polygon boundary
         final CountryBoundaryMap map = CountryBoundaryMap
-                .fromBoundaryMap(Collections.singletonMap(country, polygon));
+                .fromBoundaryMap(Collections.singletonMap(country, this.polygon));
         final AtlasLoadingOption option = AtlasLoadingOption.createOptionWithAllEnabled(map);
         return new OsmPbfLoader(input, this.polygon, option).read();
     }

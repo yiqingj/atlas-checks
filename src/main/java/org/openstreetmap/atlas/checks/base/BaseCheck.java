@@ -84,9 +84,9 @@ public abstract class BaseCheck<T> implements Check, Serializable
                 this.configurationValue(configuration, PARAMETER_WHITELIST_TAGS, ""));
         final Map<String, String> challengeMap = this.configurationValue(configuration,
                 PARAMETER_CHALLENGE, Collections.EMPTY_MAP);
-        this.flagLanguageMap = this.configurationValue(configuration, PARAMETER_FLAG,
+        this.flagLanguageMap = configurationValue(configuration, PARAMETER_FLAG,
                 Collections.EMPTY_MAP);
-        this.locale = this.configurationValue(configuration, PARAMETER_LOCALE_KEY,
+        this.locale = configurationValue(configuration, PARAMETER_LOCALE_KEY,
                 DEFAULT_LOCALE.getLanguage(), Locale::new);
         if (challengeMap.isEmpty())
         {
@@ -100,14 +100,14 @@ public abstract class BaseCheck<T> implements Check, Serializable
             this.challenge = gson.fromJson(gson.toJson(challengeMap), Challenge.class);
         }
         this.polygonFilter = AtlasEntityPolygonsFilter.forConfigurationValues(
-                this.configurationValue(configuration,
-                        AtlasEntityPolygonsFilter.INCLUDED_POLYGONS_KEY, Collections.emptyMap()),
-                this.configurationValue(configuration,
+                configurationValue(configuration, AtlasEntityPolygonsFilter.INCLUDED_POLYGONS_KEY,
+                        Collections.emptyMap()),
+                configurationValue(configuration,
                         AtlasEntityPolygonsFilter.INCLUDED_MULTIPOLYGONS_KEY,
                         Collections.emptyMap()),
-                this.configurationValue(configuration,
-                        AtlasEntityPolygonsFilter.EXCLUDED_POLYGONS_KEY, Collections.emptyMap()),
-                this.configurationValue(configuration,
+                configurationValue(configuration, AtlasEntityPolygonsFilter.EXCLUDED_POLYGONS_KEY,
+                        Collections.emptyMap()),
+                configurationValue(configuration,
                         AtlasEntityPolygonsFilter.EXCLUDED_MULTIPOLYGONS_KEY,
                         Collections.emptyMap()));
     }
